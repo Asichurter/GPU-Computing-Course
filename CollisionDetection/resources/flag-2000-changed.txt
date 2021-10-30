@@ -1,0 +1,48 @@
+w =3.07957, h =0.755984, d =2.365
+Checking SelfCD CPU...
+potential set 4586212
+end checking: 2.31160 seconds
+#self contact found at (120914, 302178)
+#self contact found at (120914, 741587)
+#self contact found at (120914, 892283)
+#self contact found at (224387, 543919)
+#self contact found at (262773, 843994)
+#self contact found at (302178, 840430)
+#self contact found at (308885, 494912)
+#self contact found at (308885, 793826)
+#self contact found at (308885, 843994)
+#self contact found at (331249, 1113333)
+#self contact found at (331249, 1113334)
+#self contact found at (331249, 1162337)
+#self contact found at (494912, 741587)
+#self contact found at (494912, 1127389)
+#self contact found at (543919, 1113317)
+#self contact found at (543919, 1113334)
+#self contact found at (589138, 843994)
+#self contact found at (622318, 843994)
+#self contact found at (840430, 1162337)
+#self contact found at (843994, 1113317)
+totally 20 colliding pairs ...
+120914
+224387
+262773
+302178
+308885
+331249
+494912
+543919
+589138
+622318
+741587
+793826
+840430
+843994
+892283
+1113317
+1113333
+1113334
+1127389
+1162337
+totally 20 colliding triangles ...
+
+D:\data\flag-1m>
