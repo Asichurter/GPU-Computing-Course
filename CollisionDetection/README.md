@@ -21,4 +21,4 @@ About totally **80 ms** of the collision detection process, where actually trian
 
 I also tried to detect collision by directly compare triangles one-by-one, and it takes much longer time, about **3322830 ms**. This indicates BVH accelerates detection by 43000 times.
 
-![](https://github.com/Asichurter/GPU-Computing-Course/tree/main/CollisionDetection/resources/cleanResult.png)
+![](resources/cleanResult.png)
