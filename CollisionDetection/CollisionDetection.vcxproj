@@ -94,7 +94,6 @@
   <ItemGroup>
     <CudaCompile Include="cpu_main.cu" />
     <CudaCompile Include="main.cu" />
-    <CudaCompile Include="testcu.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu_math.cpp" />

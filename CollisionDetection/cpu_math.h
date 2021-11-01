@@ -1,3 +1,7 @@
+/*
+    CPU code, still some bugs.
+*/
+
 #ifndef CPU_MATH_H
 #define CPU_MATH_H
 

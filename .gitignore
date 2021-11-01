@@ -4,3 +4,5 @@
 *.ptx
 *.cubin
 *.fatbin
+CollisionDetection/x64
+CollisionDetection/.vs

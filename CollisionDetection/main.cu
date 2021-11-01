@@ -1,3 +1,11 @@
+/*
+	Collision detection using binary-tree based BVH.
+	This code uses Nvidia's cuda tutorial as an utility, which refers to the book.h below.
+
+	Author: Asichurter
+	Date: 2021-11-01
+*/
+
 #include <cuda_runtime.h>
 #include <vector>
 #include <string>
@@ -7,8 +15,6 @@
 #include "collision.cuh"
 #include "check.cuh"
 #include "./common/book.h"
-
-#define COL_MAX_LEN 1000000
 
 void printElapsedTime(cudaEvent_t* start, cudaEvent_t* stop, const char* opname) {
 	printf("\nTime of %s:  ", opname);
@@ -48,7 +54,8 @@ int main()
 
 	HANDLE_ERROR(cudaEventRecord(m_start, 0));
 
-	const std::string file_path = "F:/坚果云文件/我的坚果云/研一上/cuda/projects/CollisionDetection/flag-2000-changed.obj";
+	// Set your OBJ file path here
+	const std::string file_path = "./resources/flag-2000-changed.obj";
 
 	std::vector<vec3f> vertexes;
 	std::vector<Triangle> triangles;
@@ -66,9 +73,8 @@ int main()
 	unsigned int temp_nums[100];
 	unsigned int h_collision_list[1000];
 	Triangle* colTris;
-	//cudaDeviceProp prop;
 
-	/* 分配和拷贝GPU内存 */
+	/* Allocate and copy GPU memory */
 	HANDLE_ERROR(cudaMalloc((void**)&v_ptr, vertexes.size() * sizeof(vec3f)));
 	HANDLE_ERROR(cudaMalloc((void**)&t_ptr, triangles.size() * sizeof(Triangle)));
 	HANDLE_ERROR(cudaMalloc((void**)&m_ptr, mortons.size() * sizeof(unsigned long long int)));
@@ -81,15 +87,13 @@ int main()
 	HANDLE_ERROR(cudaMemcpy(t_ptr, &triangles[0], triangles.size() * sizeof(Triangle), cudaMemcpyHostToDevice));
 	HANDLE_ERROR(cudaMemcpy(m_ptr, &mortons[0], mortons.size() * sizeof(unsigned long long int), cudaMemcpyHostToDevice));
 
-	/* 填充叶节点 */
+	/* Fill leaf nodes with triangles */
 	HANDLE_ERROR(cudaEventRecord(start, 0));
 	fillLeafNodes <<< 128, 128 >>> (t_ptr, mortons.size(), leaf_nodes);
 	HANDLE_ERROR(cudaEventRecord(stop, 0)); HANDLE_ERROR(cudaEventSynchronize(stop));
 	printElapsedTime(&start, &stop, "fillLeafNode");
-	//std::cout << "- fillLeafNodes returned" << std::endl << std::endl;
-	//HANDLE_ERROR(cudaMemcpy(test_leaves, leaf_nodes, sizeof(LeafNode)*10, cudaMemcpyDeviceToHost));
 
-	/* 生成BVH */
+	/* Generate BVH parallel */
 	HANDLE_ERROR(cudaMemset(collision_list, 0, sizeof(unsigned int) * 5));
 	HANDLE_ERROR(cudaEventRecord(start, 0));
 	generateHierarchyParallel <<< 128, 128 >>> (m_ptr, mortons.size(), leaf_nodes, internal_nodes, &collision_list[0]);
@@ -98,14 +102,14 @@ int main()
 	HANDLE_ERROR(cudaMemcpy(temp_nums, collision_list, 5 * sizeof(unsigned int), cudaMemcpyDeviceToHost));
 	printf("\n- generateHierarchyParallel check result: wrongParentNum = %u, with total nodes=%u\n\n", temp_nums[0], mortons.size() - 1);
 
-	/* 计算包围盒 */
+	/* Calculate bounding box bottom-up */
 	HANDLE_ERROR(cudaEventRecord(start, 0));
 	calBoundingBox <<< 128, 128 >>> (leaf_nodes, v_ptr, mortons.size());
 	//std::cout << "- calBoundingBox returned" << std::endl << std::endl;
 	HANDLE_ERROR(cudaEventRecord(stop, 0)); HANDLE_ERROR(cudaEventSynchronize(stop));
 	printElapsedTime(&start, &stop, "calBoundingBox");
 
-	/* 内部节点和叶节点自检 */
+	/* Self-check internal nodes and leaf nodes */
 	HANDLE_ERROR(cudaMemset(collision_list, 0, sizeof(unsigned int) * 5));
 	HANDLE_ERROR(cudaEventRecord(start, 0));
 	checkInternalNodes <<< 128, 128 >>> (internal_nodes, mortons.size()-1, &collision_list[0], &collision_list[1], &collision_list[2], &collision_list[3], &collision_list[4]);
@@ -131,80 +135,7 @@ int main()
 	printf("\n- Triangle check result: illegal triangle vidx num = %u, with total triangles=%u\n\n", temp_nums[0], mortons.size());
 	printf("\n$ triangle num = %u, mortons num = %u, vertex num = %u\n\n", triangles.size(), mortons.size(), vertexes.size());
 
-	/* 测试根节点的两个子节点的box */
-	//Node testLeaf, testInternals[3];
-	//unsigned int overlap[2];
-	//HANDLE_ERROR(cudaMemset(collision_list, 0, sizeof(unsigned int) * 5));
-	//HANDLE_ERROR(cudaMemcpy(testInternals, internal_nodes, sizeof(Node), cudaMemcpyDeviceToHost));
-	//HANDLE_ERROR(cudaMemcpy(testInternals + 1, testInternals[0].childA, sizeof(Node), cudaMemcpyDeviceToHost));
-	//HANDLE_ERROR(cudaMemcpy(testInternals + 2, testInternals[0].childB, sizeof(Node), cudaMemcpyDeviceToHost));
-	//HANDLE_ERROR(cudaMemcpy(&testLeaf, leaf_nodes, sizeof(Node), cudaMemcpyDeviceToHost));
-	//checkBoxOverlapFunc <<< 1, 1 >>> (testInternals[0].childA, leaf_nodes, collision_list);
-	//checkBoxOverlapFunc <<< 1, 1 >>> (testInternals[0].childB, leaf_nodes, collision_list+1);
-	//HANDLE_ERROR(cudaMemcpy(&overlap, collision_list, 2*sizeof(unsigned int), cudaMemcpyDeviceToHost));
-	//printf("$ overlap result: L=%u, R=%u\n", overlap[0], overlap[1]);
-	//printf("$ leaf box: [(%f, %f), (%f, %f), (%f, %f)]\n", testLeaf.box.x1, testLeaf.box.x2, testLeaf.box.y1, testLeaf.box.y2, testLeaf.box.z1, testLeaf.box.z2);
-	//printf("$ root box: [(%f, %f), (%f, %f), (%f, %f)]\n", testInternals[0].box.x1, testInternals[0].box.x2, testInternals[0].box.y1, testInternals[0].box.y2, testInternals[0].box.z1, testInternals[0].box.z2);
-	//printf("$ root's childA box: [(%f, %f), (%f, %f), (%f, %f)]\n", testInternals[1].box.x1, testInternals[1].box.x2, testInternals[1].box.y1, testInternals[1].box.y2, testInternals[1].box.z1, testInternals[1].box.z2);
-	//printf("$ root's childB box: [(%f, %f), (%f, %f), (%f, %f)]\n", testInternals[2].box.x1, testInternals[2].box.x2, testInternals[2].box.y1, testInternals[2].box.y2, testInternals[2].box.z1, testInternals[2].box.z2);
-
-	/* 测试前两个叶节点的box的merge */
-	// **********************************************************************************************************
-	//Node ls[10];
-	//Box merged;
-	//HANDLE_ERROR(cudaMemcpy(ls, leaf_nodes, 10*sizeof(Node), cudaMemcpyDeviceToHost));
-	//printf("\nmorton codes:\n");
-	//for (int i = 0; i < 10; i++) {
-	//	printf("%llu (ax=%f, ay=%f, az=%f)\n", triangles[i].morton, triangles[i].ax, triangles[i].ay, triangles[i].az);
-	//}
-	//printf("\n\n");
-
-	//printf("\nmorton xyz:\n");
-	//// x
-	//printf("x = [");
-	//for (int j = 0; j < 10; j++) {
-	//	printf("%f,", triangles[j].ax);
-	//}
-	//printf("]\n");
-	//// y
-	//printf("y = [");
-	//for (int j = 0; j < 10; j++) {
-	//	printf("%f,", triangles[j].ay);
-	//}
-	//printf("]\n");
-	//// z
-	//printf("z = [");
-	//for (int j = 0; j < 10; j++) {
-	//	printf("%f,", triangles[j].az);
-	//}
-	//printf("]\n");
-	//printf("\n\n");
-
-	//for (int i = 0; i < 10; i++) {
-	//	printBox(&ls[i].box, "box");
-	//}
-	//merged.merge(&ls[0].box, &ls[1].box);
-	//printBox(&merged, "merged of 1-st and 2-nd box: ");
-	//printf("\n");
-	// **********************************************************************************************************
-
-	/* BOX测试 */
-	//HANDLE_ERROR(cudaMemset(collision_list, 0, sizeof(unsigned int) * 5));
-	//HANDLE_ERROR(cudaMemcpy(temp_nums, collision_list, sizeof(unsigned int) * 5, cudaMemcpyDeviceToHost));
-	//printf("\n- collision list after init: %u, %u, %u, %u, %u\n\n", temp_nums[0], temp_nums[1], temp_nums[2], temp_nums[3], temp_nums[4]);
-	//----------------------------------------------------------------------------------------------------------
-	//Node* h_internals = new Node[3];
-	//HANDLE_ERROR(cudaMemcpy(h_internals, internal_nodes, sizeof(Node), cudaMemcpyDeviceToHost));
-	//HANDLE_ERROR(cudaMemcpy(h_internals + 1, h_internals[0].childA, sizeof(Node), cudaMemcpyDeviceToHost));
-	//HANDLE_ERROR(cudaMemcpy(h_internals + 2, h_internals[0].childB, sizeof(Node), cudaMemcpyDeviceToHost));
-	//
-	//printf("$ childA & childB box check result: %u\n$ childA box:[(%f, %f), (%f, %f), (%f, %f)]\n$ childB box: [(%f, %f), (%f, %f), (%f, %f)]\n\n",
-	//	checkBoxOverlap(&h_internals[1].box, &h_internals[2].box),
-	//	h_internals[1].box.x1, h_internals[1].box.x2, h_internals[1].box.y1, h_internals[1].box.y2, h_internals[1].box.z1, h_internals[1].box.z2,
-	//	h_internals[2].box.x1, h_internals[2].box.x2, h_internals[2].box.y1, h_internals[2].box.y2, h_internals[2].box.z1, h_internals[2].box.z2);
-	//printf("$ root info: childA has %u nodes, childB has %u nodes\n\n", h_internals[1].childCount, h_internals[2].childCount);
-
-	/* 寻找碰撞点对 */
+	/* Find collision pairs */
 	HANDLE_ERROR(cudaEventRecord(start, 0));
 	dim3 blocks(128, 128);
 	dim3 threads(128);

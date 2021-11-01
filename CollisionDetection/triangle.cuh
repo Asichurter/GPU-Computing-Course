@@ -36,12 +36,6 @@ typedef struct triangle{
 		}
 	}
 
-	__device__ __host__ int contact(triangle* other) {
-		int nCount = this->neighborCount(other);
-		if (nCount > 1) return 0;
-		return 1;
-	}
-
 } Triangle;
 
 #endif // TRIANGLE_H

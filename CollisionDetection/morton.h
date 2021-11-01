@@ -4,9 +4,7 @@
 
 # include <assert.h>
 
-// Expands a 10-bit integer into 30 bits
-// by inserting 2 zeros after each bit.
-unsigned long long int expandBits(unsigned long long int v)
+unsigned long long int expand64Bits(unsigned long long int v)
 {
     //v = (v * 0x00010001u) & 0xFF0000FFu;
     //v = (v * 0x00000101u) & 0x0F00F00Fu;
@@ -30,16 +28,30 @@ unsigned long long int expandBits(unsigned long long int v)
     return v;
 }
 
+unsigned int expand32Bits(unsigned int v)
+{
+    v &= 0x3ff;
+    v = (v | v << 16) & 0x30000ff;   //  << < THIS IS THE MASK for shifting 16 (for bit 8 and 9)
+    v = (v | v << 8) & 0x300f00f;
+    v = (v | v << 4) & 0x30c30c3;
+    v = (v | v << 2) & 0x9249249;
+
+    return v;
+}
+
+// Norm coordinate to [0,1]
 double normX(double x)
 {
     return (x - 0.004501) / 3.08;
 }
 
+// Norm coordinate to [0,1]
 double normY(double y)
 {
     return (y + 0.476622) / 0.76;
 }
 
+// Norm coordinate to [0,1]
 double normZ(double z)
 {
     return (z + 0.381965) / 2.36;
@@ -48,7 +60,6 @@ double normZ(double z)
 unsigned long int zyxAxisCoding(unsigned long long int x, unsigned long long int y, unsigned long long int z)
 {
     return (z << 42) + (y << 21) + x;
-    //return 3 * z + 2 * y + x;
 }
 
 unsigned long int xzyAxisCoding(unsigned long long int x, unsigned long long int y, unsigned long long int z)
@@ -56,8 +67,6 @@ unsigned long int xzyAxisCoding(unsigned long long int x, unsigned long long int
     return (x << 42) + (z << 21) + y;
 }
 
-// Calculates a 30-bit Morton code for the
-// given 3D point located within the unit cube [0,1].
 unsigned long long int morton3D(double x, double y, double z)
 
 {
@@ -68,10 +77,11 @@ unsigned long long int morton3D(double x, double y, double z)
 
     assert(ex > 0 && ey > 0 && ez > 0);
 
-    unsigned long long int xx = expandBits(ex);
-    unsigned long long int yy = expandBits(ey);
-    unsigned long long int zz = expandBits(ez);
+    unsigned long long int xx = expand64Bits(ex);
+    unsigned long long int yy = expand64Bits(ey);
+    unsigned long long int zz = expand64Bits(ez);
 
+    // interleaving merge 
     // ´íÎ»merge£¬x×óÒÆ2Î»£¬y×óÒÆ1Î»
     return (xx << 2) | (yy << 1) | zz;
     //return zyxAxisCoding(ex, ey, ez);

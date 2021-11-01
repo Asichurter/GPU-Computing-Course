@@ -31,22 +31,6 @@ typedef struct box {
 		init = 1;
 	}
 
-	__device__ __host__ int overlap(box* other) {
-		//if ((x1 < other->x2) && (other->x1 < x2)) return 1;
-		//if (((x1 - other->x2) * (other->x1 - x2)) > 0) return 1;
-		//if (((y1 - other->y2) * (other->y1 - y2)) > 0) return 1; 
-		//if (((z1 - other->z2) * (other->z1 - z2)) > 0) return 1;
-		if ((x1 - other->x2) * (other->x1 - x2) > 0 || ((y1 - other->y2) * (other->y1 - y2)) > 0 || ((z1 - other->z2) * (other->z1 - z2)) > 0) return 1;
-		return 0;
-	}
-
-	__device__ __host__ int overlapTest(box* other) {
-		if (other == NULL) return 2;
-
-		if (x1 - other->x2 < 0) return 1;
-		else return 0;
-	}
-
 	__device__ __host__ int selfCheck() {
 		return init;
 	}

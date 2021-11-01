@@ -1,3 +1,8 @@
+/*
+* This code mainly references an Nvidia blog: 
+* https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/
+*/
+
 #ifndef BVH_H
 #define BVH_H
 
@@ -19,16 +24,16 @@ typedef struct range{
 
 class Node {
 public:
-    unsigned int idx;               // 节点下标
-    unsigned int bounded = 0;       // 子节点计算box的个数
-    unsigned int childCount;        // 子树下包含的所有叶节点数量
-    unsigned int visited;           // 是否遍历已访问（for debug）
+    unsigned int idx;               // index of node
+    unsigned int bounded = 0;       // calculated bounding box count of child nodes
+    unsigned int childCount;        // node count under subtree
+    unsigned int visited;           // if visited while traversing (for debug)
 
-    bool isLeaf;                    // 是否是叶节点
-	Node *parent;                   // 父节点
-    Node *childA, *childB;          // 左右子节点，只有内部节点才有
-    Box box;                        // AABB包围盒
-    Triangle *triangle;             // 所述的三角形，只有叶节点才会有
+    bool isLeaf;                    // if leaf node
+	Node *parent;                   // parent node
+    Node *childA, *childB;          // left/right child node, only internal nodes have
+    Box box;                        // AABB bounding box
+    Triangle *triangle;             // corresponding triangle, only leaf nodes have
 
     __host__ __device__ Node() { 
         parent = NULL; 
@@ -42,7 +47,11 @@ public:
 
 #define delta(i,j,keys,n) ((j >= 0 && j < n) ? __clzll(keys[i] ^ keys[j]) : -1) 
 
-/* 通过寻找排序morton的最大前置0数量，找到对应的分割点。
+/* 
+    Finding split point of the range by inspecting maximum leading zeros.
+    This algorithm should be coupled with BVH generation.
+
+    通过寻找排序morton的最大前置0数量，找到对应的分割点。
     本算法需要与bvh建立过程相耦合。
 */
 __device__ int findSplit(unsigned long long int* mortons,
@@ -274,46 +283,5 @@ __global__ void calBoundingBox(Node* leaves, vec3f* vertexes, unsigned int numOf
         }
     }
 }
-
-//class BVH {
-//public:
-//    LeafNode* leaves;
-//    InternalNode* inters;
-//    vec3f* vertexes;
-//
-//    BVH(LeafNode* l, InternalNode* i, vec3f* v) {
-//        leaves = l;
-//        inters = i;
-//        vertexes = v;
-//    }
-//
-//    Node* getRoot() {
-//        return &inters[0];
-//    }
-//
-//    Node* getLeftChild(Node* node) {
-//        if (node->isLeaf()) return NULL;
-//        return ((InternalNode*)node)->childA;
-//    }
-//
-//    Node* getRightChild(Node* node) {
-//        if (node->isLeaf()) return NULL;
-//        return ((InternalNode*)node)->childB;
-//    }
-//
-//    Box* getBox(Node* node) {
-//        return &(node->box);
-//    }
-//};
-
-//__global__ void testFunc(int* res)
-//{
-//    unsigned int nums[] = { 1,2,4,5,19, 24, 25, 30 };
-//    Range range = determineRange(nums, 8, 4);
-//    int split = findSplit(nums, range.x, range.y);
-//    res[0] = range.x;
-//    res[1] = range.y;
-//    res[2] = split;
-//}
 
 #endif // BVH_H

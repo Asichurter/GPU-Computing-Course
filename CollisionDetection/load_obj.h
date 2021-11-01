@@ -27,7 +27,6 @@ void loadObj(const string filename,
 	vector<unsigned long long int>& mortons)
 {
 	std::ifstream in(filename.c_str());
-	//vector<unsigned long long int> mortons;
 
 	if (!in.good())
 	{
@@ -65,7 +64,6 @@ void loadObj(const string filename,
 		else if (buffer[0] == 'f' && (buffer[1] == ' ' || buffer[1] == 32))
 		{
 			Triangle f, nv;
-			// 修改face读取，每一组都是一个顶点下标和纹理下标
 			int v1, v2, v3;
 			int nt = sscanf(buffer, "f %d/%d %d/%d %d/%d", &v1, &nv.vIdx[0], &v2, &nv.vIdx[1], &v3, &nv.vIdx[2]);
 			if (nt != 6)
@@ -84,6 +82,8 @@ void loadObj(const string filename,
 			f.vIdx[1] = v2 - 1;
 			f.vIdx[2] = v3 - 1;
 
+			// Use the center of the triangle vertexes to represent the triangle while calculating Morton code
+			// NOTE: Here assumes all vertexes have been read into vector when reading faces, unless memory asccess error will occur
 			// 使用三角形的中心（三个顶点的平均值）作为三角形的表示点，计算morton值
 			// NOTE: 此处假设了在读取face时，所有的vertex都已经被读入，否则将会出现访问超界
 			vec3f* p1 = &vertexes[v1 - 1], *p2 = &vertexes[v2 - 1], *p3 = &vertexes[v3 - 1];
@@ -102,6 +102,7 @@ void loadObj(const string filename,
 		}
 	}
 
+	// Sort triangles according to Morton codes
 	// 根据morton值来对三角形进行排序
 	thrust::sort_by_key(mortons.begin(), mortons.end(), triangles.begin());
 	
@@ -113,17 +114,12 @@ void loadObj(const string filename,
 		}
 	}
 
-	// reassign morton
-	//for (int i = 0; i < mortons.size() - 1; i++) {
-	//	ori_mortons.push_back(i + 1);
-	//}
-
 	printf("\nObj File Loaded:\n");
 	printf("- %u vertexes loaded\n", vertexes.size());
 	printf("- %u triangles loaded\n", triangles.size());
 	printf("- wrong morton sort count: %u\n", wrongSortCount);
 	printf("- First morton code: %llu, last morton code: %llu\n\n", mortons[0], mortons[mortons.size() - 1]);
-	//printf("- xmin=%f, ymin=%f, z=%f\n", xmin, ymin, zmin);
+	printf("- xmin=%f, ymin=%f, z=%f\n", xmin, ymin, zmin);
 }
 
 #endif // !LOAD_OBJ_H

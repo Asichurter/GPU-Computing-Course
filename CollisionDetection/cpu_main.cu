@@ -1,3 +1,7 @@
+/*
+    CPU code, still some bugs.
+*/
+
 //#include <cuda_runtime.h>
 //#include <vector>
 //#include <string>

@@ -84,18 +84,6 @@ __device__ __host__ int checkTriangleContactHelper(Triangle* a, Triangle* b, vec
 	vec3f* q1 = &vs[b->vIdx[0]], *q2 = &vs[b->vIdx[1]], *q3 = &vs[b->vIdx[2]];
 	
 	return checkTriangleContact(*p1, *p2, *p3, *q1, *q2, *q3);
-
-
-
-	//if (p1->x > q1->x) return 1;
-	//return 0;
-
-	//if (checkNeighborTriangle(p1, p2, p3, q1, q2, q3)) return false;
-	//return true;
-
-	//return checkTriangleContact(p1, p2, p3, q1, q2, q3);
-
-	//return p1->x > q1->x;
 }
 
 #endif // !TRI_CONTACT_H

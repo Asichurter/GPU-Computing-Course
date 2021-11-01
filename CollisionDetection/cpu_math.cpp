@@ -1,3 +1,7 @@
+/*
+    CPU code, still some bugs.
+*/
+
 #include "cpu_math.h"
 #include <stdio.h>
 
