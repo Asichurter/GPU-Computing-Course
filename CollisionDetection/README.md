@@ -4,6 +4,8 @@ This code uses **binary tree based Bounding Volume Hierarchy(BVH)** to accelerat
 
 It mainly references to a Nvidia blog: [Thinking Parallel, Part III: Tree Construction on the GPU](https://developer.nvidia.com/blog/thinking-parallel-part-iii-tree-construction-gpu/).
 
+Also, this code uses an error handling utility of CUDA provided by Nvidia "Cuda-by-Examples" tutorial: [Cuda-by-Examples](https://developer.nvidia.com/cuda-example), which is included under `common` folder.
+
 ## Method Overview
 - **Overall Structure**: Binary-Tree Based BVh
 - **Bounding Box Type**: AABB Bounding Box
